@@ -1,5 +1,4 @@
 import json
-import os
 import requests
 import time
 import boto3
@@ -35,51 +34,71 @@ def getInfoFromJSON(response_json):
         data = json.loads(response_json)
         if (data["totalHits"] == 0):
             print("ERROR: No item information found for given UPC code")
-            exit(-1)
+            return {
+                'statusCode': 404,
+                'body': "ERROR: Item not found"
+            }
         name = data["foods"][0]["description"].lstrip().capitalize()
         category = data["foods"][0]["foodCategory"].lstrip().capitalize()
         calories = next((block["value"] for block in data["foods"][0]["foodNutrients"] if block["nutrientId"] == 1008), 0)
-        return name, category, calories
+        return {
+            "name" : name,
+            "category" : category,
+            "calories" : calories
+        }
     except Exception as e:
         print(f"ERROR: Failed to parse JSON data: {str(e)}")
-        exit(-1)
+        return None
     
 def insert_item(uid, upc, response_info):
     try:
         db_client = boto3.client('dynamodb')
+        item_id = 'IT' + str(int(time.time() * 1000))
+        item = {
+            "pk": {'S': uid },
+            "sk": {'S': item_id },
+            "UPC":{'S': upc },
+            "name":{'S': response_info['name'] },
+            "quantity": {'N': '0' },
+            "exp_date": {'N': '0' },
+            "calories": {'S': str(response_info['calories']) },
+            "img_url": {'S': '' },
+            "category": {'S': response_info['category']}
+        }
         response = db_client.put_item(
             TableName='fridgebase',
-            Item={
-                "pk": {'S': uid },
-                "sk": {'S': 'IT' + str(int(time.time() * 1000)) },
-                "UPC":{'S': upc },
-                "name":{'S': response_info['name'] },
-                "quantity": {'N': '0' },
-                "exp_date": {'N': '0' },
-                "calories": {'S': str(response_info['calories']) },
-                "img_url": {'S': '' },
-                "category": {'S': response_info['category']}
-            }
+            Item=item 
         )
+        return {
+            "pk": uid,
+            "sk": item_id,
+            "UPC": upc,
+            "name": response_info['name'],
+            "quantity": 0,
+            "exp_date": 0,
+            "calories": str(response_info['calories']),
+            "img_url": '',
+            "category": response_info['category']
+        }
     except Exception as e:
         print("ERROR: Failed to insert into DynamoDB:", e)
-        exit(1)
+        return {}
 
 def lambda_handler(event, context):
     # Define the url to send the request to
     upc = event['upc']
     uid = event['uid']
-    api_key = "DEMO_KEY"
+    api_key = "wn0aUcaBRdgzaIAXL9lzh69bEkskIAkPfolNO8RW"
     response_json = findProductUsingUPC(upc, api_key)
-    name, category, cal = getInfoFromJSON(response_json)
-    response_info = {
-        "name" : name,
-        "category" : category,
-        "calories" : cal
-    }
-    insert_item(uid, upc, response_info)
+    response_info = getInfoFromJSON(response_json)
 
-    return {
-        'statusCode': 200,
-        'body': response_info
-    }
+    # If unable to get response information, return a 404 status code
+    if (response_info is None):
+        return {
+            'statusCode': 404,
+            'body': "ERROR: Item not found"
+        }
+    
+    response = insert_item(uid, upc, response_info)
+
+    return response
