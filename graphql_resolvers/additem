@@ -1,0 +1,28 @@
+## Below example shows how to create an object from all provided GraphQL arguments
+## The primary key of the obejct is a randomly generated UUD using the $util.autoId() utility
+## Other utilities include $util.matches() for regular expressions, $util.time.nowISO8601() or
+##   $util.time.nowEpochMilliSeconds() for timestamps, and even List or Map helpers like
+##   $util.list.copyAndRetainAll() $util.map.copyAndRemoveAllKeys() for shallow copies
+## Read more: https://docs.aws.amazon.com/appsync/latest/devguide/resolver-context-reference.html#utility-helpers-in-util
+#set($id = $util.autoUlid())
+{
+    "version" : "2018-05-29",
+    "operation" : "PutItem",
+    "key" : {
+        "pk": $util.dynamodb.toDynamoDBJson($ctx.args.input.pk),
+        "sk": $util.dynamodb.toDynamoDBJson("IT#${id}"),
+    },
+    "attributeValues" : {
+        "UPC": $util.dynamodb.toDynamoDBJson($ctx.args.input.UPC),
+        "name": $util.dynamodb.toDynamoDBJson($ctx.args.input.name),
+        "category": $util.dynamodb.toDynamoDBJson($ctx.args.input.category),
+        "calories": $util.dynamodb.toDynamoDBJson($ctx.args.input.calories),
+        "img_url": $util.dynamodb.toDynamoDBJson($ctx.args.input.img_url),
+        "exp_date": $util.dynamodb.toDynamoDBJson($ctx.args.input.exp_date),
+        "quantity": $util.dynamodb.toDynamoDBJson($ctx.args.input.quantity)
+    }
+}
+
+
+## Pass back the result from DynamoDB. **
+$util.toJson($ctx.result)

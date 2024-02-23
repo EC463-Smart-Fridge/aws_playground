@@ -1,0 +1,43 @@
+#set($expression = "")
+#set($expressionNames = {})
+#set($expressionValues = {})
+
+#if($ctx.args.input.name)
+    #set($expression = "${expression} #name = :name")
+    $util.qr($expressionNames.put("#name", "name"))
+    $util.qr($expressionValues.put(":name", $util.dynamodb.toDynamoDB($ctx.args.input.name)))
+#end
+
+#if($ctx.args.input.exp_date)
+    #if(!$expression.isEmpty()) 
+        #set($expression = "${expression},")
+    #end
+    #set($expression = "${expression} #exp_date = :exp_date")
+    $util.qr($expressionNames.put("#exp_date", "exp_date"))
+    $util.qr($expressionValues.put(":exp_date", $util.dynamodb.toDynamoDB($ctx.args.input.exp_date)))
+#end
+
+#if($ctx.args.input.quantity)
+    #if(!$expression.isEmpty()) 
+        #set($expression = "${expression},")
+    #end
+    #set($expression = "${expression} #quantity = :quantity")
+    $util.qr($expressionNames.put("#quantity", "quantity"))
+    $util.qr($expressionValues.put(":quantity", $util.dynamodb.toDynamoDB($ctx.args.input.quantity)))
+#end
+
+{
+  "version" : "2017-02-28",
+  "operation" : "UpdateItem",
+  "key" : {
+      "pk": $util.dynamodb.toDynamoDBJson($ctx.args.input.pk),
+      "sk": $util.dynamodb.toDynamoDBJson($ctx.args.input.sk)
+  },
+  #if(!$expression.isEmpty())
+  "update" : {
+      "expression" : "set $expression",
+      "expressionNames" : $util.toJson($expressionNames),
+      "expressionValues" : $util.toJson($expressionValues)
+  }
+  #end
+}
