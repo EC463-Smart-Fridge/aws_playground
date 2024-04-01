@@ -8,7 +8,9 @@ import boto3
 def findProductUsingUPC(upc, api_key):
     # Define the API endpoint URL
     
-    url = f"https://api.nal.usda.gov/fdc/v1/foods/search?api_key={api_key}&query={upc}"
+    url = f"""
+    https://api.nal.usda.gov/fdc/v1/foods/search?api_key={api_key}&query="{upc}" +raw
+"""
 
     try:
         # Send an HTTP GET request to the API endpoint
@@ -38,9 +40,11 @@ def getInfoFromJSON(response_json):
                 'statusCode': 404,
                 'body': "ERROR: Item not found"
             }
-        name = data["foods"][0]["description"].lstrip().capitalize()
-        category = data["foods"][0]["foodCategory"].lstrip().capitalize()
-        calories = next((block["value"] for block in data["foods"][0]["foodNutrients"] if block["nutrientId"] == 1008), 0)
+        for i in range (20):
+            name = data["foods"][i]["description"].lstrip().capitalize()
+            category = data["foods"][i]["foodCategory"].lstrip().capitalize()
+            calories = next((block["value"] for block in data["foods"][i]["foodNutrients"] if block["nutrientId"] == 1008), 0)
+            print(name, category, calories)
         return {
             "name" : name,
             "category" : category,
@@ -100,5 +104,6 @@ def lambda_handler(event, context):
         }
     
     response = insert_item(uid, upc, response_info)
-
     return response
+
+lambda_handler({'upc' : "banana", 'uid' : 'UID1'}, None)
