@@ -4,8 +4,6 @@ import time
 import boto3
 from datetime import datetime, timedelta
 
-# Access the secrets / api keys stored in github secrets
-
 def findProductUsingUPC(upc, api_key):
     # Define the API endpoint URL
     

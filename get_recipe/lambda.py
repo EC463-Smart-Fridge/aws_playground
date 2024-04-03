@@ -136,16 +136,6 @@ def getCaloriesByRecipe(API_KEY, recipeID):
 
     return calories
 
-
-def parseIngredient(API_KEY, ingredient): # ingredient is the ingredient that needs parsing
-    # 1 point cost per parsed ingredient; expensive call :(
-    directory = "jsonData"
-    filename = "RecipeByIngredients"
-
-    
-    return
-    
-
 def lambda_handler(event, context):
 
     '''
@@ -169,9 +159,13 @@ def lambda_handler(event, context):
         recipe_info = {}
         recipe_info['name'] = recipe[1]
         recipe_info['img'] = recipe[2]
-        recipe_info['steps'] = getRecipeInstructions(API_KEY, recipe[0])
         recipe_info['calories'] = getCaloriesByRecipe(API_KEY, recipe[0])
-        response_info.append(recipe_info)
+        recipe_steps = getRecipeInstructions(API_KEY, recipe[0])
+
+        if len(recipe_steps) > 1: # Only add entry if recipe steps are parsed correctly
+            recipe_info['steps'] = recipe_steps
+            recipe_info['calories'] = getCaloriesByRecipe(API_KEY, recipe[0])
+            response_info.append(recipe_info)
 
     print(response_info)
     # instructions = getRecipeInstructions(API_KEY, recipes)
