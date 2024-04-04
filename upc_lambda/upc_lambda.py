@@ -68,7 +68,7 @@ def findProductUsingUPC(searchTerm, api_key, lookupType):
 
 def getGenericNames(item):
     # Define the endpoint
-    API_KEY = "531880dfcffc441f8773ac8ccbd4f2da"
+    API_KEY = ""
     api = "?apiKey=" + API_KEY
     url = "https://api.spoonacular.com/food/detect/" + api
 
@@ -189,7 +189,7 @@ def lambda_handler(event, context):
     uid = event['uid']
     product_name = event.get("name")
     
-    api_key = "wn0aUcaBRdgzaIAXL9lzh69bEkskIAkPfolNO8RW"
+    api_key = ""
     
     # Get the item information using the upc code
     if (product_name):
@@ -209,4 +209,4 @@ def lambda_handler(event, context):
     response = insert_item(uid, upc, response_info, product_name)
     return response
 
-print(lambda_handler({'upc' : "banana", 'uid' : 'UID1'}, None))
+print(lambda_handler({'upc' : "banana", 'uid' : 'UID1', 'name' : 'banana'}, None))
