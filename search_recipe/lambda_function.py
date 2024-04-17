@@ -57,7 +57,7 @@ def urlPrser(request, API_KEY, parameterList):
 
 def getRecipeByIngredients(API_KEY, parameterList): # parameterList should be a list of ingredients
     NUMTORETURN = 8 # Sets number of recipes to return
-    RANKING = 2 # Set to 1 to maximize used ingredients, 2 to minimize missing ingredients
+    RANKING = 1 # Set to 1 to maximize used ingredients, 2 to minimize missing ingredients
 
     url = urlPrser(1, API_KEY, parameterList)
     url = url + "&number=" + str(NUMTORETURN)
@@ -68,12 +68,15 @@ def getRecipeByIngredients(API_KEY, parameterList): # parameterList should be a 
     recipeResults = []
     # Iterate over each recipe
     for recipe in recipesData:
-        # Extract recipe ID and name
-        recipeID = recipe.get('id')
-        recipeNAME = recipe.get('title')
-        recipeIMAGE = recipe.get('image')
-        # Append tuple to list
-        recipeResults.append((recipeID, recipeNAME, recipeIMAGE))
+        try:
+            # Extract recipe ID and name
+            recipeID = recipe.get('id')
+            recipeNAME = recipe.get('title')
+            recipeIMAGE = recipe.get('image')
+            # Append tuple to list
+            recipeResults.append((recipeID, recipeNAME, recipeIMAGE))
+        except:
+            print(f"Error: key is missing for a recipe.")
 
     return recipeResults # returns a tuple with the recipe ID and name
     ''' For example:
@@ -81,7 +84,7 @@ def getRecipeByIngredients(API_KEY, parameterList): # parameterList should be a 
     '''
 
 def getRecipeByName(API_KEY, parameterList): #parameterList is name to search
-    NUMTORETURN = 10 # Sets number of recipes to return
+    NUMTORETURN = 2 # Sets number of recipes to return
 
     url = urlPrser(4, API_KEY, parameterList)
     url = url + "&number=" + str(NUMTORETURN)
@@ -163,11 +166,11 @@ def lambda_handler(event, context):
     '''
 
     # Define use of API
-    API_KEY = "531880dfcffc441f8773ac8ccbd4f2da"
-    ingredients = event['ingredients']
+    API_KEY = ""
+    name = event['name']
     num_recipes = 5
 
-    recipes = getRecipeByIngredients(API_KEY, ingredients)
+    recipes = getRecipeByName(API_KEY, name)
     response_info = []
 
     for recipe in recipes:
@@ -196,7 +199,8 @@ def lambda_handler(event, context):
              })
 
         recipe_info = {
-             "name" : str(recipe[1]),
+             "sk" : str(recipe[0]),
+             "recipe_name" : str(recipe[1]),
              "img" : str(recipe[2]),
              "steps" : recipe_steps,
              "ingredients" : ingreds,
@@ -206,7 +210,7 @@ def lambda_handler(event, context):
         num_recipes -= 1
 
     # If unable to get response information, return a 404 status code
-    if (response_info is None):
+    if (response_info is None or len(response_info) == 0):
         return {
             'statusCode': 404,
             'body': "ERROR: Item not found"
@@ -214,4 +218,4 @@ def lambda_handler(event, context):
     
     return response_info
 
-print(lambda_handler({'ingredients' : ["apple", "banana"]}, None))
+print(lambda_handler( {'name':'mapo tofu'}, None))
